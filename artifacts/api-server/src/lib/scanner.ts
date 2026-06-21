@@ -1,6 +1,6 @@
 import { db, dealsTable, keywordsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { searchEbayItems } from "./ebay";
+import { fetchAllSources } from "./sources";
 import { analyzeDeal } from "./anthropic";
 import { logger } from "./logger";
 import type WebSocket from "ws";
@@ -47,11 +47,11 @@ export function addWebSocketClient(ws: WebSocket) {
   ws.on("error", () => state.clients.delete(ws));
 }
 
-function broadcast(deal: any) {
+function broadcast(deal: object) {
   const msg = JSON.stringify(deal);
   for (const client of state.clients) {
     try {
-      if (client.readyState === 1) {
+      if ((client as any).readyState === 1) {
         client.send(msg);
       }
     } catch (err) {
@@ -61,9 +61,7 @@ function broadcast(deal: any) {
 }
 
 export function startScan() {
-  if (state.status === "running") {
-    return;
-  }
+  if (state.status === "running") return;
   state.status = "running";
   state.startedAt = new Date();
   state.stoppedAt = null;
@@ -87,7 +85,8 @@ function scheduleScan() {
     .catch((err) => logger.error({ err }, "Scan cycle error"))
     .finally(() => {
       if (state.status === "running") {
-        state.timer = setTimeout(scheduleScan, 60_000);
+        // Re-scan every 5 minutes
+        state.timer = setTimeout(scheduleScan, 5 * 60_000);
       }
     });
 }
@@ -99,23 +98,28 @@ async function runScanCycle() {
     .where(eq(keywordsTable.active, true));
 
   if (keywords.length === 0) {
-    logger.info("No active keywords — using defaults");
+    logger.info("No active keywords — seeding defaults");
     await ensureDefaultKeywords();
     return;
   }
 
   state.lastScanAt = new Date();
+  logger.info({ keywords: keywords.map((k) => k.keyword) }, "Starting scan cycle");
 
   for (const kw of keywords) {
     if (state.status !== "running") break;
 
     const maxPrice = kw.maxPrice ? parseFloat(String(kw.maxPrice)) : undefined;
-    const items = await searchEbayItems(kw.keyword, maxPrice);
+    const items = await fetchAllSources(kw.keyword, maxPrice);
     state.itemsScanned += items.length;
 
     for (const item of items) {
       if (state.status !== "running") break;
 
+      // Skip items without a URL
+      if (!item.itemUrl) continue;
+
+      // De-duplicate by itemId (unique per source+id)
       const existing = await db
         .select({ id: dealsTable.id })
         .from(dealsTable)
@@ -124,37 +128,44 @@ async function runScanCycle() {
 
       if (existing.length > 0) continue;
 
-      const minDiscount = kw.minDiscount ? parseFloat(String(kw.minDiscount)) : null;
-
       const analysis = await analyzeDeal({
         title: item.title,
-        currentPrice: item.currentPrice,
+        currentPrice: item.currentPrice ?? 0,
         condition: item.condition,
         seller: item.seller,
         sellerFeedbackScore: item.sellerFeedbackScore,
         category: item.category,
+        description: item.description,
+        source: item.source,
       });
 
-      if (analysis.score < 3) continue;
+      // Filter low-quality results
+      if (analysis.score < 4) continue;
+
+      const minDiscount = kw.minDiscount ? parseFloat(String(kw.minDiscount)) : null;
       if (minDiscount && analysis.score < 5) continue;
 
-      const [deal] = await db.insert(dealsTable).values({
-        ebayItemId: item.itemId,
-        title: item.title,
-        currentPrice: String(item.currentPrice),
-        originalPrice: null,
-        discountPercent: null,
-        imageUrl: item.imageUrl,
-        itemUrl: item.itemUrl,
-        seller: item.seller,
-        sellerRating: item.sellerFeedbackScore !== null ? String(item.sellerFeedbackScore) : null,
-        condition: item.condition,
-        aiScore: String(analysis.score),
-        aiAnalysis: analysis.analysis,
-        category: item.category,
-        keyword: kw.keyword,
-        status: "active",
-      }).returning();
+      const [deal] = await db
+        .insert(dealsTable)
+        .values({
+          ebayItemId: item.itemId,
+          title: item.title,
+          currentPrice: String(item.currentPrice ?? 0),
+          originalPrice: null,
+          discountPercent: null,
+          imageUrl: item.imageUrl,
+          itemUrl: item.itemUrl,
+          seller: item.seller,
+          sellerRating:
+            item.sellerFeedbackScore !== null ? String(item.sellerFeedbackScore) : null,
+          condition: item.condition,
+          aiScore: String(analysis.score),
+          aiAnalysis: analysis.analysis,
+          category: item.category ?? item.source,
+          keyword: kw.keyword,
+          status: "active",
+        })
+        .returning();
 
       state.dealsFound += 1;
 
@@ -164,7 +175,9 @@ async function runScanCycle() {
         title: deal.title,
         currentPrice: parseFloat(String(deal.currentPrice)),
         originalPrice: deal.originalPrice ? parseFloat(String(deal.originalPrice)) : null,
-        discountPercent: deal.discountPercent ? parseFloat(String(deal.discountPercent)) : null,
+        discountPercent: deal.discountPercent
+          ? parseFloat(String(deal.discountPercent))
+          : null,
         imageUrl: deal.imageUrl,
         itemUrl: deal.itemUrl,
         seller: deal.seller,
@@ -178,16 +191,31 @@ async function runScanCycle() {
         createdAt: deal.createdAt.toISOString(),
       });
 
-      logger.info({ title: deal.title, score: analysis.score }, "New deal found");
+      logger.info(
+        { title: deal.title, score: analysis.score, source: item.source },
+        "New deal saved"
+      );
     }
   }
+
+  logger.info(
+    { itemsScanned: state.itemsScanned, dealsFound: state.dealsFound },
+    "Scan cycle complete"
+  );
 }
 
 async function ensureDefaultKeywords() {
-  const defaults = ["vintage camera", "retro console", "mechanical keyboard", "vinyl records"];
-  for (const kw of defaults) {
-    await db.insert(keywordsTable)
-      .values({ keyword: kw, active: true })
+  const defaults = [
+    { keyword: "mechanical keyboard", maxPrice: "150" },
+    { keyword: "vintage camera", maxPrice: null },
+    { keyword: "graphics card", maxPrice: "400" },
+    { keyword: "vinyl records", maxPrice: "30" },
+    { keyword: "lego sets", maxPrice: "60" },
+  ];
+  for (const d of defaults) {
+    await db
+      .insert(keywordsTable)
+      .values({ keyword: d.keyword, maxPrice: d.maxPrice, active: true })
       .onConflictDoNothing();
   }
 }
