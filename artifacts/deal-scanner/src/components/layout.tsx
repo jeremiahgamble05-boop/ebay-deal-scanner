@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Activity, LayoutDashboard, Search, List } from "lucide-react";
+import { Activity, LayoutDashboard, Search, List, Bell } from "lucide-react";
 import { useGetScanStatus } from "@workspace/api-client-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -16,6 +16,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/deals", label: "Deal Feed", icon: List },
     { href: "/keywords", label: "Keywords", icon: Search },
+    { href: "/alerts", label: "Alerts", icon: Bell },
   ];
 
   return (

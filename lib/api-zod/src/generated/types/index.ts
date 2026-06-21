@@ -6,6 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './alertConfig';
+export * from './alertConfigInput';
+export * from './alertConfigInputType';
+export * from './alertConfigType';
+export * from './alertConfigUpdate';
+export * from './alertConfigUpdateType';
+export * from './alertLog';
+export * from './alertTestResult';
 export * from './deal';
 export * from './dealStatus';
 export * from './errorResponse';

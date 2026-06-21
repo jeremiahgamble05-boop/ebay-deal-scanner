@@ -215,3 +215,105 @@ export const DeleteKeywordResponse = zod.object({
 })
 
 
+/**
+ * @summary List all alert configurations
+ */
+export const ListAlertConfigsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "type": zod.enum(['webhook', 'discord', 'slack']),
+  "url": zod.string(),
+  "minScore": zod.number(),
+  "enabled": zod.boolean(),
+  "createdAt": zod.string()
+})
+export const ListAlertConfigsResponse = zod.array(ListAlertConfigsResponseItem)
+
+
+/**
+ * @summary Create an alert configuration
+ */
+export const CreateAlertConfigBody = zod.object({
+  "name": zod.string(),
+  "type": zod.enum(['webhook', 'discord', 'slack']),
+  "url": zod.string(),
+  "minScore": zod.number().optional(),
+  "enabled": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Update an alert configuration
+ */
+export const UpdateAlertConfigParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateAlertConfigBody = zod.object({
+  "name": zod.string().optional(),
+  "type": zod.enum(['webhook', 'discord', 'slack']).optional(),
+  "url": zod.string().optional(),
+  "minScore": zod.number().optional(),
+  "enabled": zod.boolean().optional()
+})
+
+export const UpdateAlertConfigResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "type": zod.enum(['webhook', 'discord', 'slack']),
+  "url": zod.string(),
+  "minScore": zod.number(),
+  "enabled": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete an alert configuration
+ */
+export const DeleteAlertConfigParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAlertConfigResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "type": zod.enum(['webhook', 'discord', 'slack']),
+  "url": zod.string(),
+  "minScore": zod.number(),
+  "enabled": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Send a test alert
+ */
+export const TestAlertConfigParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const TestAlertConfigResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Get delivery logs for an alert config
+ */
+export const ListAlertLogsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListAlertLogsResponseItem = zod.object({
+  "id": zod.number(),
+  "alertConfigId": zod.number(),
+  "dealId": zod.number(),
+  "success": zod.boolean(),
+  "errorMessage": zod.string().nullish(),
+  "sentAt": zod.string()
+})
+export const ListAlertLogsResponse = zod.array(ListAlertLogsResponseItem)
+
+

@@ -20,6 +20,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AlertConfig,
+  AlertConfigInput,
+  AlertConfigUpdate,
+  AlertLog,
+  AlertTestResult,
   Deal,
   ErrorResponse,
   HealthStatus,
@@ -865,4 +870,441 @@ export const useDeleteKeyword = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeleteKeywordMutationOptions(options));
     }
+
+export const getListAlertConfigsUrl = () => {
+
+
+
+
+  return `/api/v1/alerts`
+}
+
+/**
+ * @summary List all alert configurations
+ */
+export const listAlertConfigs = async ( options?: RequestInit): Promise<AlertConfig[]> => {
+
+  return customFetch<AlertConfig[]>(getListAlertConfigsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAlertConfigsQueryKey = () => {
+    return [
+    `/api/v1/alerts`
+    ] as const;
+    }
+
+
+export const getListAlertConfigsQueryOptions = <TData = Awaited<ReturnType<typeof listAlertConfigs>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAlertConfigs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAlertConfigsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAlertConfigs>>> = ({ signal }) => listAlertConfigs({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAlertConfigs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAlertConfigsQueryResult = NonNullable<Awaited<ReturnType<typeof listAlertConfigs>>>
+export type ListAlertConfigsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all alert configurations
+ */
+
+export function useListAlertConfigs<TData = Awaited<ReturnType<typeof listAlertConfigs>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAlertConfigs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAlertConfigsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateAlertConfigUrl = () => {
+
+
+
+
+  return `/api/v1/alerts`
+}
+
+/**
+ * @summary Create an alert configuration
+ */
+export const createAlertConfig = async (alertConfigInput: AlertConfigInput, options?: RequestInit): Promise<AlertConfig> => {
+
+  return customFetch<AlertConfig>(getCreateAlertConfigUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      alertConfigInput,)
+  }
+);}
+
+
+
+
+export const getCreateAlertConfigMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAlertConfig>>, TError,{data: BodyType<AlertConfigInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAlertConfig>>, TError,{data: BodyType<AlertConfigInput>}, TContext> => {
+
+const mutationKey = ['createAlertConfig'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAlertConfig>>, {data: BodyType<AlertConfigInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAlertConfig(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAlertConfigMutationResult = NonNullable<Awaited<ReturnType<typeof createAlertConfig>>>
+    export type CreateAlertConfigMutationBody = BodyType<AlertConfigInput>
+    export type CreateAlertConfigMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create an alert configuration
+ */
+export const useCreateAlertConfig = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAlertConfig>>, TError,{data: BodyType<AlertConfigInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAlertConfig>>,
+        TError,
+        {data: BodyType<AlertConfigInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAlertConfigMutationOptions(options));
+    }
+
+export const getUpdateAlertConfigUrl = (id: number,) => {
+
+
+
+
+  return `/api/v1/alerts/${id}`
+}
+
+/**
+ * @summary Update an alert configuration
+ */
+export const updateAlertConfig = async (id: number,
+    alertConfigUpdate: AlertConfigUpdate, options?: RequestInit): Promise<AlertConfig> => {
+
+  return customFetch<AlertConfig>(getUpdateAlertConfigUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      alertConfigUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateAlertConfigMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAlertConfig>>, TError,{id: number;data: BodyType<AlertConfigUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAlertConfig>>, TError,{id: number;data: BodyType<AlertConfigUpdate>}, TContext> => {
+
+const mutationKey = ['updateAlertConfig'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAlertConfig>>, {id: number;data: BodyType<AlertConfigUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAlertConfig(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAlertConfigMutationResult = NonNullable<Awaited<ReturnType<typeof updateAlertConfig>>>
+    export type UpdateAlertConfigMutationBody = BodyType<AlertConfigUpdate>
+    export type UpdateAlertConfigMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update an alert configuration
+ */
+export const useUpdateAlertConfig = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAlertConfig>>, TError,{id: number;data: BodyType<AlertConfigUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAlertConfig>>,
+        TError,
+        {id: number;data: BodyType<AlertConfigUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAlertConfigMutationOptions(options));
+    }
+
+export const getDeleteAlertConfigUrl = (id: number,) => {
+
+
+
+
+  return `/api/v1/alerts/${id}`
+}
+
+/**
+ * @summary Delete an alert configuration
+ */
+export const deleteAlertConfig = async (id: number, options?: RequestInit): Promise<AlertConfig> => {
+
+  return customFetch<AlertConfig>(getDeleteAlertConfigUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteAlertConfigMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAlertConfig>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAlertConfig>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteAlertConfig'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAlertConfig>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAlertConfig(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAlertConfigMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAlertConfig>>>
+
+    export type DeleteAlertConfigMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an alert configuration
+ */
+export const useDeleteAlertConfig = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAlertConfig>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAlertConfig>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteAlertConfigMutationOptions(options));
+    }
+
+export const getTestAlertConfigUrl = (id: number,) => {
+
+
+
+
+  return `/api/v1/alerts/${id}/test`
+}
+
+/**
+ * @summary Send a test alert
+ */
+export const testAlertConfig = async (id: number, options?: RequestInit): Promise<AlertTestResult> => {
+
+  return customFetch<AlertTestResult>(getTestAlertConfigUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getTestAlertConfigMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testAlertConfig>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof testAlertConfig>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['testAlertConfig'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testAlertConfig>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  testAlertConfig(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestAlertConfigMutationResult = NonNullable<Awaited<ReturnType<typeof testAlertConfig>>>
+
+    export type TestAlertConfigMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Send a test alert
+ */
+export const useTestAlertConfig = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testAlertConfig>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof testAlertConfig>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getTestAlertConfigMutationOptions(options));
+    }
+
+export const getListAlertLogsUrl = (id: number,) => {
+
+
+
+
+  return `/api/v1/alerts/${id}/logs`
+}
+
+/**
+ * @summary Get delivery logs for an alert config
+ */
+export const listAlertLogs = async (id: number, options?: RequestInit): Promise<AlertLog[]> => {
+
+  return customFetch<AlertLog[]>(getListAlertLogsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAlertLogsQueryKey = (id: number,) => {
+    return [
+    `/api/v1/alerts/${id}/logs`
+    ] as const;
+    }
+
+
+export const getListAlertLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAlertLogs>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAlertLogs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAlertLogsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAlertLogs>>> = ({ signal }) => listAlertLogs(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAlertLogs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAlertLogsQueryResult = NonNullable<Awaited<ReturnType<typeof listAlertLogs>>>
+export type ListAlertLogsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get delivery logs for an alert config
+ */
+
+export function useListAlertLogs<TData = Awaited<ReturnType<typeof listAlertLogs>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAlertLogs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAlertLogsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 

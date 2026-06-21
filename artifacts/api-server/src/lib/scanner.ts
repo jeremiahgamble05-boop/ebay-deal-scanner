@@ -2,6 +2,7 @@ import { db, dealsTable, keywordsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { fetchAllSources } from "./sources";
 import { analyzeDeal } from "./anthropic";
+import { fireDealAlerts } from "./alerter";
 import { logger } from "./logger";
 import type WebSocket from "ws";
 
@@ -195,6 +196,21 @@ async function runScanCycle() {
         { title: deal.title, score: analysis.score, source: item.source },
         "New deal saved"
       );
+
+      // Fire webhook alerts (non-blocking, errors are logged inside)
+      fireDealAlerts({
+        id: deal.id,
+        title: deal.title,
+        currentPrice: parseFloat(String(deal.currentPrice)),
+        aiScore: deal.aiScore ? parseFloat(String(deal.aiScore)) : null,
+        aiAnalysis: deal.aiAnalysis,
+        itemUrl: deal.itemUrl,
+        seller: deal.seller,
+        condition: deal.condition,
+        category: deal.category,
+        keyword: deal.keyword,
+        source: item.source,
+      }).catch((err) => logger.error({ err }, "fireDealAlerts error"));
     }
   }
 

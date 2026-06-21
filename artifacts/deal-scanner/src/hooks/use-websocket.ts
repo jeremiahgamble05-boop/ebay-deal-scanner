@@ -14,7 +14,10 @@ export function useDealWebsocket() {
 
       wsRef.current.onmessage = (event) => {
         try {
-          const deal: Deal = JSON.parse(event.data);
+          const msg = JSON.parse(event.data);
+          // Filter out control messages (e.g. { type: "connected" })
+          if (!msg || typeof msg.id === 'undefined' || typeof msg.title === 'undefined') return;
+          const deal = msg as Deal;
           setLiveDeals((prev) => {
             const exists = prev.some(d => d.id === deal.id);
             if (exists) return prev;

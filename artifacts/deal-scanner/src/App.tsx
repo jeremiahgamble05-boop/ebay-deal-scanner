@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Deals from "@/pages/deals";
 import Keywords from "@/pages/keywords";
+import Alerts from "@/pages/alerts";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/deals" component={Deals} />
       <Route path="/keywords" component={Keywords} />
+      <Route path="/alerts" component={Alerts} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -16,6 +16,8 @@ tags:
     description: Deal management
   - name: stats
     description: Statistics
+  - name: alerts
+    description: Alert configuration
 paths:
   /healthz:
     get:
@@ -218,6 +220,120 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Keyword"
+
+  /v1/alerts:
+    get:
+      operationId: listAlertConfigs
+      tags: [alerts]
+      summary: List all alert configurations
+      responses:
+        "200":
+          description: List of alert configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertConfig"
+    post:
+      operationId: createAlertConfig
+      tags: [alerts]
+      summary: Create an alert configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertConfigInput"
+      responses:
+        "201":
+          description: Alert config created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertConfig"
+
+  /v1/alerts/{id}:
+    patch:
+      operationId: updateAlertConfig
+      tags: [alerts]
+      summary: Update an alert configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertConfigUpdate"
+      responses:
+        "200":
+          description: Alert config updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertConfig"
+    delete:
+      operationId: deleteAlertConfig
+      tags: [alerts]
+      summary: Delete an alert configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alert config deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertConfig"
+
+  /v1/alerts/{id}/test:
+    post:
+      operationId: testAlertConfig
+      tags: [alerts]
+      summary: Send a test alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertTestResult"
+
+  /v1/alerts/{id}/logs:
+    get:
+      operationId: listAlertLogs
+      tags: [alerts]
+      summary: Get delivery logs for an alert config
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alert delivery logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertLog"
 
 components:
   schemas:
@@ -427,3 +543,97 @@ components:
           type: number
       required:
         - keyword
+
+    AlertConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [webhook, discord, slack]
+        url:
+          type: string
+        minScore:
+          type: number
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - type
+        - url
+        - minScore
+        - enabled
+        - createdAt
+
+    AlertConfigInput:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [webhook, discord, slack]
+        url:
+          type: string
+        minScore:
+          type: number
+        enabled:
+          type: boolean
+      required:
+        - name
+        - type
+        - url
+
+    AlertConfigUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [webhook, discord, slack]
+        url:
+          type: string
+        minScore:
+          type: number
+        enabled:
+          type: boolean
+
+    AlertLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        alertConfigId:
+          type: integer
+        dealId:
+          type: integer
+        success:
+          type: boolean
+        errorMessage:
+          type: ["string", "null"]
+        sentAt:
+          type: string
+      required:
+        - id
+        - alertConfigId
+        - dealId
+        - success
+        - sentAt
+
+    AlertTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message

@@ -131,6 +131,74 @@ export interface KeywordInput {
   minDiscount?: number;
 }
 
+export type AlertConfigType = typeof AlertConfigType[keyof typeof AlertConfigType];
+
+
+export const AlertConfigType = {
+  webhook: 'webhook',
+  discord: 'discord',
+  slack: 'slack',
+} as const;
+
+export interface AlertConfig {
+  id: number;
+  name: string;
+  type: AlertConfigType;
+  url: string;
+  minScore: number;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export type AlertConfigInputType = typeof AlertConfigInputType[keyof typeof AlertConfigInputType];
+
+
+export const AlertConfigInputType = {
+  webhook: 'webhook',
+  discord: 'discord',
+  slack: 'slack',
+} as const;
+
+export interface AlertConfigInput {
+  name: string;
+  type: AlertConfigInputType;
+  url: string;
+  minScore?: number;
+  enabled?: boolean;
+}
+
+export type AlertConfigUpdateType = typeof AlertConfigUpdateType[keyof typeof AlertConfigUpdateType];
+
+
+export const AlertConfigUpdateType = {
+  webhook: 'webhook',
+  discord: 'discord',
+  slack: 'slack',
+} as const;
+
+export interface AlertConfigUpdate {
+  name?: string;
+  type?: AlertConfigUpdateType;
+  url?: string;
+  minScore?: number;
+  enabled?: boolean;
+}
+
+export interface AlertLog {
+  id: number;
+  alertConfigId: number;
+  dealId: number;
+  success: boolean;
+  /** @nullable */
+  errorMessage?: string | null;
+  sentAt: string;
+}
+
+export interface AlertTestResult {
+  success: boolean;
+  message: string;
+}
+
 export type ListDealsParams = {
 limit?: number;
 minScore?: number;
