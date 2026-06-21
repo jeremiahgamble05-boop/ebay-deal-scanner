@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: eBay Deal Scanner API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: scan
+    description: Scan management
+  - name: deals
+    description: Deal management
+  - name: stats
+    description: Statistics
 paths:
   /healthz:
     get:
@@ -24,6 +30,195 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /v1/scan/start:
+    post:
+      operationId: startScan
+      tags: [scan]
+      summary: Start a deal scan
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanInput"
+      responses:
+        "200":
+          description: Scan started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanJob"
+
+  /v1/scan/status:
+    get:
+      operationId: getScanStatus
+      tags: [scan]
+      summary: Get current scan status
+      responses:
+        "200":
+          description: Current scan status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanStatus"
+
+  /v1/scan/stop:
+    post:
+      operationId: stopScan
+      tags: [scan]
+      summary: Stop the current scan
+      responses:
+        "200":
+          description: Scan stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanJob"
+
+  /v1/deals:
+    get:
+      operationId: listDeals
+      tags: [deals]
+      summary: List all discovered deals
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: minScore
+          in: query
+          schema:
+            type: number
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [score, discount, createdAt]
+            default: createdAt
+      responses:
+        "200":
+          description: List of deals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Deal"
+
+  /v1/deals/{id}:
+    get:
+      operationId: getDeal
+      tags: [deals]
+      summary: Get a single deal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "404":
+          description: Deal not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/deals/{id}/dismiss:
+    post:
+      operationId: dismissDeal
+      tags: [deals]
+      summary: Dismiss a deal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deal dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /v1/stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get scanner statistics
+      responses:
+        "200":
+          description: Scanner statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+  /v1/keywords:
+    get:
+      operationId: listKeywords
+      tags: [scan]
+      summary: List scan keywords
+      responses:
+        "200":
+          description: List of keywords
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Keyword"
+    post:
+      operationId: addKeyword
+      tags: [scan]
+      summary: Add a keyword to scan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KeywordInput"
+      responses:
+        "201":
+          description: Keyword added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Keyword"
+
+  /v1/keywords/{id}:
+    delete:
+      operationId: deleteKeyword
+      tags: [scan]
+      summary: Remove a keyword
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Keyword removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Keyword"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +229,201 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    ScanInput:
+      type: object
+      properties:
+        keywords:
+          type: array
+          items:
+            type: string
+        maxPrice:
+          type: number
+        minDiscount:
+          type: number
+
+    ScanJob:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [idle, running, stopped]
+        startedAt:
+          type: ["string", "null"]
+        stoppedAt:
+          type: ["string", "null"]
+        itemsScanned:
+          type: integer
+        dealsFound:
+          type: integer
+      required:
+        - id
+        - status
+        - itemsScanned
+        - dealsFound
+
+    ScanStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [idle, running, stopped]
+        itemsScanned:
+          type: integer
+        dealsFound:
+          type: integer
+        lastScanAt:
+          type: ["string", "null"]
+        activeKeywords:
+          type: array
+          items:
+            type: string
+        connectedClients:
+          type: integer
+      required:
+        - status
+        - itemsScanned
+        - dealsFound
+        - activeKeywords
+        - connectedClients
+
+    Deal:
+      type: object
+      properties:
+        id:
+          type: integer
+        ebayItemId:
+          type: string
+        title:
+          type: string
+        currentPrice:
+          type: number
+        originalPrice:
+          type: ["number", "null"]
+        discountPercent:
+          type: ["number", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        itemUrl:
+          type: string
+        seller:
+          type: string
+        sellerRating:
+          type: ["number", "null"]
+        condition:
+          type: string
+        aiScore:
+          type: ["number", "null"]
+        aiAnalysis:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        keyword:
+          type: string
+        status:
+          type: string
+          enum: [active, dismissed]
+        createdAt:
+          type: string
+      required:
+        - id
+        - ebayItemId
+        - title
+        - currentPrice
+        - itemUrl
+        - seller
+        - condition
+        - keyword
+        - status
+        - createdAt
+
+    Stats:
+      type: object
+      properties:
+        totalDeals:
+          type: integer
+        activeDeals:
+          type: integer
+        dismissedDeals:
+          type: integer
+        avgDiscount:
+          type: number
+        avgAiScore:
+          type: number
+        totalSavings:
+          type: number
+        topCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+            required:
+              - category
+              - count
+        recentActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: string
+              count:
+                type: integer
+            required:
+              - hour
+              - count
+      required:
+        - totalDeals
+        - activeDeals
+        - dismissedDeals
+        - avgDiscount
+        - avgAiScore
+        - totalSavings
+        - topCategories
+        - recentActivity
+
+    Keyword:
+      type: object
+      properties:
+        id:
+          type: integer
+        keyword:
+          type: string
+        maxPrice:
+          type: ["number", "null"]
+        minDiscount:
+          type: ["number", "null"]
+        active:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - keyword
+        - active
+        - createdAt
+
+    KeywordInput:
+      type: object
+      properties:
+        keyword:
+          type: string
+        maxPrice:
+          type: number
+        minDiscount:
+          type: number
+      required:
+        - keyword
